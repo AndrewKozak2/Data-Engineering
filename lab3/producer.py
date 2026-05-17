@@ -2,13 +2,22 @@ import csv
 import json
 import time
 from kafka import KafkaProducer
+from kafka.errors import NoBrokersAvailable
 
-producer = KafkaProducer(
-    bootstrap_servers=['broker1:29092', 'broker2:29093'],
-    value_serializer=lambda v: json.dumps(v).encode('utf-8')
-)
+def get_producer():
+    while True:
+        try:
+            producer = KafkaProducer(
+                bootstrap_servers=['broker1:29092', 'broker2:29093'],
+                value_serializer=lambda v: json.dumps(v).encode('utf-8')
+            )
+            print("Producer connected to Kafka!")
+            return producer
+        except NoBrokersAvailable:
+            print("Kafka brokers not available, retrying in 5 seconds...")
+            time.sleep(5)
 
-print("Producer connected to Kafka!")
+producer = get_producer()
 
 with open('Divvy_Trips_2019_Q4.csv', mode='r', encoding='utf-8') as file:
     csv_reader = csv.DictReader(file) 
